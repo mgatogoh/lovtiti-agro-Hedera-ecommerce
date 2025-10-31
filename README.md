@@ -139,7 +139,7 @@ Lovtiti Agro Mart is built as a decentralized e-commerce platform that connects 
 
 ## 🔐 Smart Contract Details
 
-- **Contract Address:** `0.0.xxxx`  
+- **Contract Address:** `0.0.7008432`  
 - **ABI:** [View ABI](./contracts/abi.json)
 
 ## 🔐 How HARAR & HBAR Power Every Transaction
