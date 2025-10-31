@@ -68,7 +68,77 @@ Lovtiti Agro Mart is built by a passionate, cross-functional team committed to t
 - **Gurpratap** — *Smart Contract Developer*  
   Developed Hedera-powered smart contracts for secure, traceable, and trust-based transactions.
 
----
+## 🛠️ Hedera Services Used
+
+Lovtiti Agro Mart leverages Hedera’s distributed ledger technology to ensure secure, traceable, and transparent operations across its decentralized marketplace.
+- ✅ Smart Contract Service – Used to manage escrow logic, product authentication, and transaction finality.
+- ✅ Token Service (planned) – Will support stablecoin payments and reward mechanisms for farmers. 
+- ✅ Consensus Service – Ensures timestamped, immutable records of buyer reviews and product availability  
+- ✅ Scheduled Transactions – Enables automated release of funds upon delivery confirmation.  
+- ✅ Topic Messaging – Facilitates real-time updates on product status, dispatch, and payment confirmation.
+
+
+🔁 Hedera Transactions Executed
+
+Our smart contract developer confirmed the following transaction types are actively used in the platform:
+
+- User Creation via Smart Contract  
+  Farmers and buyers are registered on-chain using Hedera smart contracts, ensuring identity verification and traceability.
+
+- Financial Transactions for Product Sales  
+  Buyers initiate purchases through smart contracts that lock funds in escrow. Upon delivery confirmation, funds are released to the farmer using Scheduled Transactions.
+
+- TopicMessageSubmitTransaction  
+  Used to broadcast product availability, dispatch status, and buyer feedback to a Hedera topic. These messages are read by mirror nodes and trigger smart contract actions.
+
+- ContractCallTransaction  
+  Executes logic for listing products, verifying delivery, and releasing payments.
+
+
+
+🔐 ABFT Implementation
+
+Lovtiti Agro Mart uses Hedera’s Asynchronous Byzantine Fault Tolerance (ABFT) consensus mechanism to ensure:
+
+- Tamper-proof records of every transaction and review.
+- Fast finality for escrow releases and product authentication.
+- Secure messaging between buyers and sellers via Hedera topics.
+
+This architecture guarantees trust and transparency for all participants in the marketplace. 
+
+🧱 Technical Architecture
+
+Lovtiti Agro Mart is built as a decentralized e-commerce platform that connects African farmers directly to buyers. It uses the Hedera Hashgraph network to ensure secure, traceable, and transparent transactions.
++---------------------+       +---------------------+       +---------------------+
+|     Frontend        | <---> |     Backend/API     | <---> |   Hedera Network    |
+|  (React + Tailwind) |       |  (Node.js + Express)|       | (Smart Contracts +  |
+|                     |       |                     |       |  Consensus Service) |
++---------------------+       +---------------------+       +---------------------+
+
+        ↑                          ↑                          ↑
+        |                          |                          |
+        |                          |                          |
++---------------------+       +---------------------+       +---------------------+
+|   Neon Database     |       |  HashPack Wallet    |       |  Mirror Node        |
+| (User profiles,     |       | (User auth &        |       | (Transaction logs,  |
+|  listings, reviews) |       |  payment signing)   |       |  topic messages)    |
++---------------------+       +---------------------+       +---------------------+
+
+
+## 🔗 Hedera SDK/API
+
+- JavaScript SDK (`hedera-sdk-js`)
+
+
+## 🌐 Network
+
+- Deployed on **Hedera Testnet**
+
+
+## 🔐 Smart Contract Details
+
+- **Contract Address:** `0.0.xxxx`  
+- **ABI:** [View ABI](./contracts/abi.json)
 
 ## 🔐 How HARAR & HBAR Power Every Transaction
 
