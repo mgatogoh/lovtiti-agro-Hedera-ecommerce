@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/blob/main/public/lovtiti-logo.png?raw=true" alt="Lovtiti Agro Mart Logo" width="200"/>
+  <img src="Lovtiti-Agro-Mart-Logo.png" alt="Lovtiti Agro Mart Logo" width="200"/>
 </p>
 
 # 🌾 Lovtiti Agro Mart
