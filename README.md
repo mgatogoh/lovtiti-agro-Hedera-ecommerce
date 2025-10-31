@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Lovtiti-Agro-Mart-Logo.png" alt="Lovtiti Agro Mart Logo" width="200"/>
+  <img src="Lovtiti%20Agro%20Mart%20Logo.png" alt="Lovtiti Agro Mart Logo" width="200"/>
 </p>
 
 # 🌾 Lovtiti Agro Mart
