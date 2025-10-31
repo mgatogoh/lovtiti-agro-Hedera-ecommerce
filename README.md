@@ -9,7 +9,7 @@
 🔗 **Live Demo**  
 [Click here to preview Lovtiti Agro Mart](#)
 
----
+
 
 ## ❗ Challenge We’re Solving
 
@@ -17,7 +17,7 @@ Across Africa, countless farmers face devastating losses after harvest. Their pr
 
 **Lovtiti Agro Mart** is our solution: a decentralized marketplace that connects farmers directly to buyers using Hedera blockchain technology. No middlemen. No guesswork. Just trust, transparency, and fair trade.
 
----
+
 
 ## 💔 Why It Matters
 
@@ -30,7 +30,7 @@ In rural communities, the story is heartbreakingly familiar:
 
 These aren’t isolated incidents—they’re daily realities. **Lovtiti Agro Mart** was born from this pain. It’s more than a platform; it’s a movement to restore dignity, income, and control to the people who feed our continent.
 
----
+
 
 ## 🌍 Project Vision
 
@@ -46,7 +46,7 @@ Powered by Hedera and guided by our HARAR framework, we bring:
 
 Lovtiti isn’t just tech—it’s empowerment.
 
----
+
 
 ## 👥 Team Members
 
@@ -164,7 +164,7 @@ Kofi’s tomatoes carry a digital certificate verified by Lovtiti’s smart cont
 ### 🆁 Real-Time Updates  
 Amina receives live notifications: payment confirmation, dispatch time, and delivery tracking—all recorded on Hedera.
 
----
+
 
 ## 💸 Role of HBAR in Lovtiti Agro Mart
 
@@ -172,7 +172,7 @@ Amina receives live notifications: payment confirmation, dispatch time, and deli
 - ⚙️ **Smart Contract Execution**: HARAR logic runs on Hedera, secured by HBAR.
 - 🔒 **Security & Speed**: Fast, low-cost, and reliable—perfect for micro-payments in agriculture.
 
----
+
 
 ## 🧠 Database Architecture
 
@@ -182,7 +182,7 @@ Amina receives live notifications: payment confirmation, dispatch time, and deli
   - Transaction logs
   - Buyer reviews
 
----
+
 
 ## 📍 Target Users
 
@@ -194,9 +194,17 @@ Amina receives live notifications: payment confirmation, dispatch time, and deli
 
 ## 🧪 Getting Started
 
-```bash
 # Install dependencies
 npm install
 
 # Start the development server
 npm run dev
+
+## 📂 Submission Assets
+
+- 🎯 [Pitch Deck – Lovtiti Agro Mart](https://gamma.app/docs/Lovtiti-Agro-Mart-vcws1ek15xfd6cx)
+- ✅ [Certification – Hedera Hashgraph](https://claim.hashgraphdev.com/certification?oneTimeCode=6054cfa3-833d-11f0-95ff-c9277d9399ff)
+```bash
+
+
+
