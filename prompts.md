@@ -1,0 +1,45 @@
+# Cursor Prompts for Lovtiti Agro Mart
+
+## 1. Initialize Project Structure
+**Prompt**:  
+"Initialize a TypeScript Next.js project for Lovtiti Agro Mart - a comprehensive blockchain-powered agricultural ecosystem connecting farmers, distributors, transporters, buyers, and agro experts. Create structure: `/app` (Next.js), `/prisma` (Neon PostgreSQL), `/smart-contracts` (Hedera), `/backend` (USSD), `/.cursorrules`, `/prompts.md`. Include subfolders for auth, onboarding, dashboard, listings, admin, components, and API routes. Generate `package.json` with dependencies: `@clerk/nextjs`, `@hashgraph/sdk`, `@prisma/client`, `@stripe/stripe-js`, `stripe`, `tailwindcss`, `shadcn/ui`, `@radix-ui/react-components`, `ipfs-http-client`, `redis`, `elasticsearch`. Configure `tailwind.config.js`, `tsconfig.json`, `prisma/schema.prisma` for Neon, and `.env` for Clerk, Stripe, Neon, Hedera, Redis, and Elasticsearch keys. Create `README.md` and a GitHub Actions workflow in `/.github/workflows/ci.yml` for CI/CD."
+
+## 2. Multi-Role Authentication Setup
+**Prompt**:  
+"Generate Clerk authentication for Lovtiti Agro Mart supporting multiple user roles: farmers, distributors, transporters, buyers, and agro experts. Create `/app/auth` with `login.tsx`, `signup.tsx`, `logout.tsx`. Implement email, phone, and social login using `@clerk/nextjs` with role-based access control. Add offline Hedera account login by caching encrypted credentials in localStorage. Include API routes in `/app/api/auth` for Clerk webhooks and role management. Use TailwindCSS, Shadcn, and Radix UI for styling. Generate TypeScript interfaces for multi-role user data and Jest tests in `/tests/auth`. Use environment variables for Clerk keys."
+
+## 3. Multi-Role KYC Verification System
+**Prompt**:  
+"Create comprehensive KYC verification system for all user types: farmers, distributors, transporters, buyers, and agro experts. Build onboarding pages in `/app/onboarding/[role]/page.tsx` for each user type with specialized forms. Include role-specific KYC requirements: farmers (land ownership, certifications), distributors (business licenses, warehouse certs), transporters (vehicle registrations, insurance), buyers (business registration, credit verification), agro experts (professional licenses, product supplier permits, agricultural expertise certifications). Store KYC data in Neon using Prisma with role-based schemas. Integrate with Clerk for auth. Simulate USSD KYC flows in `/backend/services/ussd.js` for feature phones. Use TailwindCSS, Shadcn, and Radix UI. Generate TypeScript interfaces and Jest tests in `/tests/kyc`."
+
+## 4. Hedera Wallet Integration & Supply Chain Tracking
+**Prompt**:  
+"Create a TypeScript module in `/utils/hedera.ts` for Hedera Hashgraph wallet integration supporting multi-stakeholder transactions. Include functions for connecting wallets, signing transactions, supply chain tracking, and caching encrypted private keys in localStorage for offline access. Use `@hashgraph/sdk` for testnet interactions. Generate comprehensive Solidity contracts in `/smart-contracts/contracts/` including Marketplace.sol for HBAR escrow payments, SupplyChain.sol for product traceability, and Logistics.sol for transportation tracking. Include deployment scripts in `/smart-contracts/scripts` and Mocha/Chai tests in `/smart-contracts/tests`. Ensure secure key management and TypeScript interfaces for all user types."
+
+## 5. Multi-Role Listing & Service Management System
+**Prompt**:  
+"Build a comprehensive listing system supporting all user types: farmers (products), distributors (bulk goods), transporters (logistics services), and agro experts (agricultural products and services). Create `/app/listings/create/page.tsx` and `/app/listings/browse/page.tsx` with role-based forms. Allow farmers to list products (name, quantity, price, images, video), distributors to list bulk goods and services, transporters to list logistics offerings (capacity, routes, pricing), and agro experts to list agricultural products (seeds, vaccines, pesticides, equipment) and expert services (consultations, equipment leasing, advice). Include validation, supply chain tracking, and quality certifications. Store data in Neon using Prisma and images in IPFS. Publish listings via Hedera smart contracts. Use TailwindCSS, Shadcn, and Radix UI. Generate API routes in `/app/api/listings` and Jest tests in `/tests/listings`."
+
+## 6. Multi-Role Dashboard System
+**Prompt**:  
+"Create specialized dashboards for all user types: `/app/dashboard/farmer/page.tsx`, `/app/dashboard/distributor/page.tsx`, `/app/dashboard/transporter/page.tsx`, `/app/dashboard/buyer/page.tsx`, and `/app/dashboard/agro-expert/page.tsx`. Include role-specific features: farmers (product management, order tracking), distributors (inventory management, supplier connections), transporters (route optimization, cargo tracking), buyers (product discovery, supply chain visibility), agro experts (product sales management, equipment leasing, expert advice, client consultations). Include filtering, real-time updates, and analytics. Cache data in localStorage for offline access. Style with TailwindCSS, Shadcn, and Radix UI. Integrate with Clerk for auth and Prisma for data management. Generate API routes in `/app/api/dashboard` and Jest/Cypress tests in `/tests/dashboard`."
+
+## 7. Supply Chain Smart Contracts & Logistics Management
+**Prompt**:  
+"Write comprehensive Solidity smart contracts in `/smart-contracts/contracts/` including Marketplace.sol for multi-stakeholder transactions, SupplyChain.sol for product traceability, Logistics.sol for transportation management, and Veterinary.sol for health record tracking. Use Hedera Contract Service for testnet deployment. Generate TypeScript functions in `/utils/hedera.ts` for contract interactions (e.g., `createListing`, `placeOrder`, `trackSupplyChain`, `scheduleTransport`, `recordHealthData`). Include deployment scripts in `/smart-contracts/scripts` and Mocha/Chai tests in `/smart-contracts/tests`. Ensure secure transaction handling and multi-role access control."
+
+## 8. STREAM API Integration & Real-Time Communication
+**Prompt**:  
+"Integrate STREAM API for comprehensive messaging and video calling system. Create `/app/messaging/page.tsx` for multi-stakeholder messaging between farmers, distributors, transporters, buyers, and agro experts. Implement `/app/video-call/[sessionId]/page.tsx` for real-time video consultations between farmers and agro experts for expert advice. Include group chat functionality for farming communities and expert discussions. Build notification system for real-time updates. Integrate with Redis for session management and STREAM API for video calling tokens. Use TailwindCSS, Shadcn, and Radix UI. Generate API routes in `/app/api/messaging`, `/app/api/video-call`, and `/app/api/notifications` with Jest tests in `/tests/communication`."
+
+## 9. Real-Time Supply Chain Tracking & Communication
+**Prompt**:  
+"Implement real-time supply chain tracking system with WebSocket connections for live updates across the entire agricultural value chain. Create `/app/tracking/[orderId]/page.tsx` for end-to-end order visibility from farm to buyer. Include GPS tracking for transporters, quality checkpoints, and delivery confirmations. Integrate with Redis for real-time data and WebSocket management. Use TailwindCSS, Shadcn, and Radix UI. Generate API routes in `/app/api/tracking` with Jest tests in `/tests/tracking`."
+
+## 10. Advanced Analytics & Reporting System
+**Prompt**:  
+"Create comprehensive analytics dashboard in `/app/analytics/page.tsx` providing insights for all user types: farmers (yield optimization, market trends), distributors (inventory forecasting, supplier performance), transporters (route efficiency, fuel optimization), buyers (supply chain costs, quality metrics), agro experts (product sales performance, equipment utilization, expert advice demand). Integrate with Elasticsearch for advanced search and analytics. Include data visualization with charts, graphs, and reports. Use TailwindCSS, Shadcn, and Radix UI. Generate API routes in `/app/api/analytics` and Jest tests in `/tests/analytics`."
+
+## 11. Mobile App & USSD Integration
+**Prompt**:  
+"Develop mobile-first responsive design and USSD integration for feature phone users. Create `/app/mobile/page.tsx` with optimized mobile interface for all user types. Implement USSD service in `/backend/services/ussd.js` supporting registration, listing, ordering, and tracking for farmers, distributors, transporters, buyers, and agro experts. Include offline synchronization and data caching. Use TailwindCSS for responsive design and Node.js Express for USSD backend. Generate API routes in `/app/api/mobile` and `/app/api/ussd` with Jest tests in `/tests/mobile`."

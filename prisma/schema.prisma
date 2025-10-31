@@ -1,0 +1,433 @@
+// Datasource
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Generator
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  firstName     String?
+  lastName      String?
+  role          Role
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  profiles      Profile[]
+  listings      Listing[]
+  ordersAsBuyer Order[]   @relation("buyer")
+
+  // Messaging
+  sentMessages     Message[] @relation("sentMessages")
+  receivedMessages Message[] @relation("receivedMessages")
+
+  // Agro Expert services
+  agroVetBookings ServiceBooking[] @relation("agroVetBookings")
+  clientBookings  ServiceBooking[] @relation("clientBookings")
+  agroVetRecords  HealthRecord[]   @relation("agroVetRecords")
+  ownerRecords    HealthRecord[]   @relation("ownerRecords")
+
+  // Agro Expert products and services
+  agroVetProducts  AgroVetProduct[] @relation("agroVetProducts")
+  agroVetEquipment EquipmentLease[] @relation("agroVetEquipment")
+  clientEquipment  EquipmentLease[] @relation("clientEquipment")
+  agroVetAdvice    ExpertAdvice[]   @relation("agroVetAdvice")
+  clientAdvice     ExpertAdvice[]   @relation("clientAdvice")
+}
+
+model Profile {
+  id           String      @id @default(cuid())
+  user         User        @relation(fields: [userId], references: [id])
+  userId       String
+  type         ProfileType
+  fullName     String
+  kycStatus    KycStatus   @default(PENDING)
+  country      String
+  address      String
+  phone        String
+  idNumber     String
+  hederaWallet String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([userId, type], name: "userId_type")
+}
+
+model Listing {
+  id                 String    @id @default(cuid())
+  title              String
+  description        String
+  productDescription String?
+  priceCents         Int
+  currency           String    @default("HBAR")
+  quantity           Int
+  unit               String    @default("kg")
+  category           String
+  images             String[] // Array of image URLs/IPFS hashes
+  video              String? // Video URL/IPFS hash
+  location           String? // Farm location
+  harvestDate        DateTime?
+  expiryDate         DateTime?
+  isActive           Boolean   @default(true)
+  isVerified         Boolean   @default(false)
+  seller             User      @relation(fields: [sellerId], references: [id])
+  sellerId           String
+  orders             Order[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  buyer           User        @relation("buyer", fields: [buyerId], references: [id])
+  buyerId         String
+  listing         Listing     @relation(fields: [listingId], references: [id])
+  listingId       String
+  status          OrderStatus @default(PENDING)
+  amountCents     Int
+  currency        String      @default("HBAR")
+  hederaEscrow    String?
+  deliveryAddress String?
+  deliveryDate    DateTime?
+  trackiHBARumber  String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Supply chain tracking
+  trackingUpdates TrackingUpdate[]
+  messages        Message[]
+}
+
+model TrackingUpdate {
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String
+  location  String
+  latitude  Float?
+  longitude Float?
+  status    String
+  notes     String?
+  timestamp DateTime @default(now())
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  sender         User        @relation("sentMessages", fields: [senderId], references: [id])
+  senderId       String
+  recipient      User        @relation("receivedMessages", fields: [recipientId], references: [id])
+  recipientId    String
+  conversationId String?
+  content        String
+  messageType    MessageType @default(TEXT)
+  attachments    String[]
+  isRead         Boolean     @default(false)
+  order          Order?      @relation(fields: [orderId], references: [id])
+  orderId        String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model ServiceBooking {
+  id            String        @id @default(cuid())
+  agroVet       User          @relation("agroVetBookings", fields: [agroVetId], references: [id])
+  agroVetId     String
+  client        User          @relation("clientBookings", fields: [clientId], references: [id])
+  clientId      String
+  serviceType   String // CONSULTATION, VACCINATION, TREATMENT, EQUIPMENT_LEASE, EXPERT_ADVICE
+  description   String
+  scheduledDate DateTime
+  location      String
+  status        BookingStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  NFT           NFT?          @relation(fields: [nFTId], references: [id])
+  nFTId         String?
+}
+
+model HealthRecord {
+  id            String   @id @default(cuid())
+  agroVet       User     @relation("agroVetRecords", fields: [agroVetId], references: [id])
+  agroVetId     String
+  animalOwner   User     @relation("ownerRecords", fields: [animalOwnerId], references: [id])
+  animalOwnerId String
+  animalType    String
+  animalId      String
+  treatment     String
+  medication    String?
+  vaccination   String?
+  notes         String?
+  attachments   String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AgroVetProduct {
+  id          String   @id @default(cuid())
+  agroVet     User     @relation("agroVetProducts", fields: [agroVetId], references: [id])
+  agroVetId   String
+  productType String // SEEDS, VACCINES, PESTICIDES, EQUIPMENT, FERTILIZERS, TOOLS
+  title       String
+  description String
+  priceCents  Int
+  currency    String   @default("USD")
+  quantity    Int
+  unit        String   @default("piece")
+  category    String
+  images      String[]
+  video       String?
+  location    String?
+  isActive    Boolean  @default(true)
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EquipmentLease {
+  id          String      @id @default(cuid())
+  agroVet     User        @relation("agroVetEquipment", fields: [agroVetId], references: [id])
+  agroVetId   String
+  client      User        @relation("clientEquipment", fields: [clientId], references: [id])
+  clientId    String
+  equipment   String
+  description String
+  dailyRate   Int // Rate in cents per day
+  currency    String      @default("USD")
+  startDate   DateTime
+  endDate     DateTime
+  status      LeaseStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  NFT         NFT?        @relation(fields: [nFTId], references: [id])
+  nFTId       String?
+}
+
+model ExpertAdvice {
+  id          String   @id @default(cuid())
+  agroVet     User     @relation("agroVetAdvice", fields: [agroVetId], references: [id])
+  agroVetId   String
+  client      User     @relation("clientAdvice", fields: [clientId], references: [id])
+  clientId    String
+  title       String
+  description String
+  adviceType  String // CROP_MANAGEMENT, PEST_CONTROL, SOIL_HEALTH, LIVESTOCK_CARE, EQUIPMENT_USAGE
+  content     String
+  attachments String[]
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  FARMER
+  DISTRIBUTOR
+  TRANSPORTER
+  BUYER
+  AGROEXPERT
+  ADMIN
+}
+
+enum ProfileType {
+  FARMER
+  DISTRIBUTOR
+  TRANSPORTER
+  BUYER
+  AGROEXPERT
+  ADMIN
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  IN_TRANSIT
+  DELIVERED
+  COMPLETED
+  DISPUTED
+  REFUNDED
+  CANCELLED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  LOCATION
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum LeaseStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+// NFT Models
+model NFT {
+  id              String   @id @default(cuid())
+  tokenId         String   @unique
+  contractAddress String
+  ownerAddress    String
+  creatorAddress  String
+  tokenStandard   String   @default("HTS-721")
+  metadataUri     String
+  metadataHash    String
+  category        String // PRODUCT, SERVICE, EQUIPMENT
+  metadata        String // JSON string
+  royalties       String // JSON string
+  isBurned        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  listings         NFTListing[]
+  transactions     NFTTransaction[]
+  supplyChainSteps SupplyChainStep[]
+  qualityChecks    QualityCheck[]
+  serviceBookings  ServiceBooking[]
+  equipmentLeases  EquipmentLease[]
+}
+
+model NFTListing {
+  id             String    @id @default(cuid())
+  nftId          String
+  nft            NFT       @relation(fields: [nftId], references: [id])
+  sellerAddress  String
+  price          Decimal   @db.Decimal(20, 8)
+  currency       String    @default("HBAR")
+  isActive       Boolean   @default(true)
+  listingTime    DateTime  @default(now())
+  expiryTime     DateTime?
+  category       String
+  description    String?
+  tags           String[]
+  views          Int       @default(0)
+  favorites      Int       @default(0)
+  isAuction      Boolean   @default(false)
+  auctionEndTime DateTime?
+  reservePrice   Decimal?  @db.Decimal(20, 8)
+  currentBid     Decimal?  @db.Decimal(20, 8)
+  currentBidder  String?
+  bidCount       Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model NFTTransaction {
+  id              String   @id @default(cuid())
+  nftId           String
+  nft             NFT      @relation(fields: [nftId], references: [id])
+  fromAddress     String
+  toAddress       String
+  price           Decimal  @db.Decimal(20, 8)
+  currency        String
+  transactionHash String   @unique
+  blockNumber     BigInt?
+  gasUsed         BigInt?
+  status          String // PENDING, CONFIRMED, FAILED
+  type            String // MINT, TRANSFER, SALE, BURN
+  royalties       String? // JSON string
+  createdAt       DateTime @default(now())
+}
+
+model SupplyChainStep {
+  id                String    @id @default(cuid())
+  nftId             String
+  nft               NFT       @relation(fields: [nftId], references: [id])
+  stepIndex         Int
+  action            String
+  location          String
+  actorAddress      String
+  metadata          String? // JSON string
+  isVerified        Boolean   @default(false)
+  verifierAddress   String?
+  verifiedAt        DateTime?
+  verificationNotes String?
+  createdAt         DateTime  @default(now())
+}
+
+model QualityCheck {
+  id        String   @id @default(cuid())
+  nftId     String
+  nft       NFT      @relation(fields: [nftId], references: [id])
+  checkType String
+  passed    Boolean
+  score     Int // 0-100
+  notes     String?
+  inspector String
+  evidence  String[] // IPFS hashes
+  createdAt DateTime @default(now())
+}
+
+model EscrowTransaction {
+  id                String    @id @default(cuid())
+  buyerAddress      String
+  sellerAddress     String
+  nftContract       String
+  nftTokenId        String
+  amount            Decimal   @db.Decimal(20, 8)
+  currency          String
+  status            String // PENDING_PAYMENT, PENDING_DELIVERY, DELIVERED, RELEASED, DISPUTED
+  deliveryStatus    String    @default("PENDING_DELIVERY")
+  trackiHBARumber    String?
+  carrier           String?
+  estimatedDelivery DateTime?
+  actualDelivery    DateTime?
+  paymentStatus     String    @default("PENDING")
+  paymentHash       String?
+  paidAt            DateTime?
+  isDisputed        Boolean   @default(false)
+  disputeReason     String?
+  disputeEvidence   String[]
+  rating            Int? // 1-5
+  feedback          String?
+  createdAt         DateTime  @default(now())
+  expiresAt         DateTime
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  amount        Int // Amount in cents
+  currency      String        @default("HBAR")
+  status        PaymentStatus @default(PENDING)
+  paymentMethod String // HEDERA, METAMASK, STRIPE, MPESA
+  fromWallet    String?
+  toWallet      String?
+  sellerId      String?
+  buyerId       String?
+  orderId       String?
+  transactionHash String?
+  metadata      Json? // Additional payment data
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
