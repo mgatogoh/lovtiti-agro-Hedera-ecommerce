@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from '@/lib/prisma';
-import { ContractExecuteTransaction, ContractFunctionParameters, } from "@hashgraph/sdk";
 import { uploadToIPFS } from "@/utils/pinata"; //Use your Pinata util
 import { auth } from "@clerk/nextjs/server";
 import dotenv from "dotenv";
-import { AGRO_CONTRACT_ID, hederaClient } from "@/lib/hederaClient";
 
 dotenv.config();
 
@@ -140,7 +138,7 @@ export async function POST(request: Request) {
     if (!user)
       return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    const hasValidProfile = user.profiles.some((p) =>
+    const hasValidProfile = user.profiles.some((p: { type: string; }) =>
       ["FARMER", "AGROEXPERT"].includes(p.type)
     );
     if (!hasValidProfile) {
@@ -193,11 +191,15 @@ export async function POST(request: Request) {
       console.log(`✅ Successfully uploaded ${uploadedImages.length}/${images.length} images`);
     }
 
-    // ✅ Call Hedera smart contract (optional for development)
+    // Call Hedera smart contract (optional for development)
     let contractTxHash = null;
 
     if (process.env.ENABLE_SMART_CONTRACT !== 'false') {
       try {
+        // Lazy-load Hedera SDK and client only when needed
+        const { ContractExecuteTransaction, ContractFunctionParameters } = await import("@hashgraph/sdk");
+        const { AGRO_CONTRACT_ID, hederaClient } = await import("@/lib/hederaClient");
+
         // First, try to register as farmer (will fail if already registered, which is fine)
         try {
           console.log("🌾 Attempting to register farmer in smart contract...");
@@ -210,7 +212,6 @@ export async function POST(request: Request) {
           const registerReceipt = await registerSubmitTx.getReceipt(hederaClient);
           console.log("✅ Farmer registration successful:", registerReceipt.status.toString());
         } catch (registerError: any) {
-          // If registration fails, it might be because farmer already exists
           console.log("ℹ️ Farmer registration failed (might already exist):", registerError.message);
         }
 
@@ -232,7 +233,6 @@ export async function POST(request: Request) {
 
         if (status !== "SUCCESS") {
           console.error("❌ Smart contract execution failed:", status);
-          // Don't fail the entire request, just log the error
           console.log("⚠️ Continuing without smart contract registration...");
         } else {
           contractTxHash = submitTx.transactionId.toString();
@@ -241,11 +241,11 @@ export async function POST(request: Request) {
       } catch (contractError: any) {
         console.error("❌ Smart contract error:", contractError);
         console.log("⚠️ Continuing without smart contract registration...");
-        // Don't fail the entire request, just continue without smart contract
       }
     } else {
       console.log("ℹ️ Smart contract calls disabled for development");
     }
+
 
     // Log contract transaction hash if available
     if (contractTxHash) {
