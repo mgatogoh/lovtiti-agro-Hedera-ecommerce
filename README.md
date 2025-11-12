@@ -1,13 +1,18 @@
 <p align="center">
-  <img src="https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/blob/main/public/lovtiti-logo.png?raw=true" alt="Lovtiti Agro Mart Logo" width="200"/>
+  <img src="production/loveli-logo.png" alt="Lovtiti Agro Mart Logo" width="200"/>
 </p>
 
 # 🌾 Lovtiti Agro Mart
 
-🔗 **Live Demo**  
-[Click here to preview Lovtiti Agro Mart](#)
+# Track : Onchain Finance And Real-World Assets (RWA)
 
----
+🔗 **Live Demo**  
+## 🎥 Demo Video
+
+Watch our Hedera Africa Hackathon submission:  
+👉 [HEDERA Africa Hackathon Project](https://youtu.be/R4nVVL1qmns?si=LJ84HJsFl9vuuuEy)
+
+
 
 ## ❗ Challenge We’re Solving
 
@@ -15,7 +20,7 @@ Across Africa, countless farmers face devastating losses after harvest. Their pr
 
 **Lovtiti Agro Mart** is our solution: a decentralized marketplace that connects farmers directly to buyers using Hedera blockchain technology. No middlemen. No guesswork. Just trust, transparency, and fair trade.
 
----
+
 
 ## 💔 Why It Matters
 
@@ -28,7 +33,7 @@ In rural communities, the story is heartbreakingly familiar:
 
 These aren’t isolated incidents—they’re daily realities. **Lovtiti Agro Mart** was born from this pain. It’s more than a platform; it’s a movement to restore dignity, income, and control to the people who feed our continent.
 
----
+
 
 ## 🌍 Project Vision
 
@@ -44,7 +49,7 @@ Powered by Hedera and guided by our HARAR framework, we bring:
 
 Lovtiti isn’t just tech—it’s empowerment.
 
----
+
 
 ## 👥 Team Members
 
@@ -68,7 +73,77 @@ Lovtiti Agro Mart is built by a passionate, cross-functional team committed to t
 - **Gurpratap** — *Smart Contract Developer*  
   Developed Hedera-powered smart contracts for secure, traceable, and trust-based transactions.
 
----
+## 🛠️ Hedera Services Used
+
+Lovtiti Agro Mart leverages Hedera’s distributed ledger technology to ensure secure, traceable, and transparent operations across its decentralized marketplace.
+- ✅ Smart Contract Service – Used to manage escrow logic, product authentication, and transaction finality.
+- ✅ Token Service (planned) – Will support stablecoin payments and reward mechanisms for farmers. 
+- ✅ Consensus Service – Ensures timestamped, immutable records of buyer reviews and product availability  
+- ✅ Scheduled Transactions – Enables automated release of funds upon delivery confirmation.  
+- ✅ Topic Messaging – Facilitates real-time updates on product status, dispatch, and payment confirmation.
+
+
+🔁 Hedera Transactions Executed
+
+Our smart contract developer confirmed the following transaction types are actively used in the platform:
+
+- User Creation via Smart Contract  
+  Farmers and buyers are registered on-chain using Hedera smart contracts, ensuring identity verification and traceability.
+
+- Financial Transactions for Product Sales  
+  Buyers initiate purchases through smart contracts that lock funds in escrow. Upon delivery confirmation, funds are released to the farmer using Scheduled Transactions.
+
+- TopicMessageSubmitTransaction  
+  Used to broadcast product availability, dispatch status, and buyer feedback to a Hedera topic. These messages are read by mirror nodes and trigger smart contract actions.
+
+- ContractCallTransaction  
+  Executes logic for listing products, verifying delivery, and releasing payments.
+
+
+
+🔐 ABFT Implementation
+
+Lovtiti Agro Mart uses Hedera’s Asynchronous Byzantine Fault Tolerance (ABFT) consensus mechanism to ensure:
+
+- Tamper-proof records of every transaction and review.
+- Fast finality for escrow releases and product authentication.
+- Secure messaging between buyers and sellers via Hedera topics.
+
+This architecture guarantees trust and transparency for all participants in the marketplace. 
+
+🧱 Technical Architecture
+
+Lovtiti Agro Mart is built as a decentralized e-commerce platform that connects African farmers directly to buyers. It uses the Hedera Hashgraph network to ensure secure, traceable, and transparent transactions.
++---------------------+       +---------------------+       +---------------------+
+|     Frontend        | <---> |     Backend/API     | <---> |   Hedera Network    |
+|  (React + Tailwind) |       |  (Node.js + Express)|       | (Smart Contracts +  |
+|                     |       |                     |       |  Consensus Service) |
++---------------------+       +---------------------+       +---------------------+
+
+        ↑                          ↑                          ↑
+        |                          |                          |
+        |                          |                          |
++---------------------+       +---------------------+       +---------------------+
+|   Neon Database     |       |  HashPack Wallet    |       |  Mirror Node        |
+| (User profiles,     |       | (User auth &        |       | (Transaction logs,  |
+|  listings, reviews) |       |  payment signing)   |       |  topic messages)    |
++---------------------+       +---------------------+       +---------------------+
+
+
+## 🔗 Hedera SDK/API
+
+- JavaScript SDK (`hedera-sdk-js`)
+
+
+## 🌐 Network
+
+- Deployed on **Hedera Testnet**
+
+
+## 🔐 Smart Contract Details
+
+- **Contract Address:** `0.0.7008432`  
+- **ABI:** [View ABI](./contracts/abi.json)
 
 ## 🔐 How HARAR & HBAR Power Every Transaction
 
@@ -92,7 +167,7 @@ Kofi’s tomatoes carry a digital certificate verified by Lovtiti’s smart cont
 ### 🆁 Real-Time Updates  
 Amina receives live notifications: payment confirmation, dispatch time, and delivery tracking—all recorded on Hedera.
 
----
+
 
 ## 💸 Role of HBAR in Lovtiti Agro Mart
 
@@ -100,7 +175,7 @@ Amina receives live notifications: payment confirmation, dispatch time, and deli
 - ⚙️ **Smart Contract Execution**: HARAR logic runs on Hedera, secured by HBAR.
 - 🔒 **Security & Speed**: Fast, low-cost, and reliable—perfect for micro-payments in agriculture.
 
----
+
 
 ## 🧠 Database Architecture
 
@@ -110,7 +185,7 @@ Amina receives live notifications: payment confirmation, dispatch time, and deli
   - Transaction logs
   - Buyer reviews
 
----
+
 
 ## 📍 Target Users
 
@@ -122,9 +197,17 @@ Amina receives live notifications: payment confirmation, dispatch time, and deli
 
 ## 🧪 Getting Started
 
-```bash
 # Install dependencies
 npm install
 
 # Start the development server
 npm run dev
+
+## 📂 Submission Assets
+
+- 🎯 [Pitch Deck – Lovtiti Agro Mart](https://gamma.app/docs/Lovtiti-Agro-Mart-vcws1ek15xfd6cx)
+- ✅ [Certification – Hedera Hashgraph](https://claim.hashgraphdev.com/certification?oneTimeCode=6054cfa3-833d-11f0-95ff-c9277d9399ff)
+```bash
+
+
+
