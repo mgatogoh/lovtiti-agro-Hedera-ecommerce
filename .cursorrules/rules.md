@@ -1,7 +1,7 @@
-# Cursor Rules for Lovitti Agro Mart
+# Cursor Rules for Lovtiti Agro Mart
 
 ## Project Context
-- Project Name: Lovitti Agro Mart
+- Project Name: Lovtiti Agro Mart
 - Description: A web-based decentralized marketplace for African farmers and buyers, using Hedera Hashgraph for transactions, Clerk for authentication, Stripe for payments, and Neon (PostgreSQL) with Prisma for data storage. Requires KYC for buyers and farmers, mandatory accounts.
 - Tech Stack:
   - Frontend: Next.js (TypeScript), TailwindCSS, Shadcn, Radix UI
