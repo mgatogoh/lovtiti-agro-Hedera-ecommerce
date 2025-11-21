@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { logCartActivity } from '@/utils/userActivityLogger';
+import { Contract, ethers } from 'ethers';
 
 export interface CartItem {
   id: string;
@@ -23,7 +24,6 @@ export interface CartItem {
   certifications: string[];
   addedAt: Date;
   updatedAt: Date;
-  // Big tech cart features
   maxQuantity?: number;
   availableQuantity?: number;
   isAvailable?: boolean;
@@ -36,7 +36,6 @@ export interface LikedItem {
   productId: string;
   listingId: string;
   likedAt: Date;
-  // Additional metadata for recommendations
   category?: string;
   price?: number;
   sellerType?: string;
@@ -49,7 +48,6 @@ interface CartState {
   totalPrice: number;
   isLoading: boolean;
   lastUpdated: Date;
-  // Big tech cart features
   sessionId: string;
   cartVersion: number;
   abandonedCartTime?: Date;
@@ -57,6 +55,9 @@ interface CartState {
   shippingCost?: number;
   taxAmount?: number;
   discounts?: { type: string; amount: number; description: string }[];
+  isProcessingHedera: boolean;
+  hederaError: string | null;
+  hederaTxId: string | null;
 }
 
 const CART_STORAGE_KEY = 'lovtiti-agro-cart-v2';
@@ -77,321 +78,14 @@ export function useCart() {
     shippingCost: 0,
     taxAmount: 0,
     discounts: [],
+    isProcessingHedera: false,
+    hederaError: null,
+    hederaTxId: null,
   });
 
-  // Generate or retrieve session ID
-  const getSessionId = useCallback(() => {
-    if (typeof window === 'undefined') return '';
-
-    let sessionId = sessionStorage.getItem(CART_SESSION_KEY);
-    if (!sessionId) {
-      sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      sessionStorage.setItem(CART_SESSION_KEY, sessionId);
-    }
-    return sessionId;
-  }, []);
-
-  // Enhanced date parsing for localStorage
-  const parseStoredDate = (dateStr: any): Date => {
-    if (!dateStr) return new Date();
-    const parsed = new Date(dateStr);
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
-  };
-
-  // Load cart from localStorage on mount - ONLY ONCE
-  useEffect(() => {
-    if (typeof window === 'undefined' || isInitialized.current) {
-      return;
-    }
-
-    console.log('🔄 Loading cart from localStorage...');
-
-    try {
-      const sessionId = getSessionId();
-      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-      const savedLiked = localStorage.getItem(LIKED_STORAGE_KEY);
-
-      console.log('📦 Saved cart data:', savedCart ? 'Found' : 'Not found');
-      console.log('❤️ Saved liked data:', savedLiked ? 'Found' : 'Not found');
-
-      let items: CartItem[] = [];
-      let likedItems: LikedItem[] = [];
-
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart);
-        items = (parsedCart.items || []).map((item: any) => ({
-          ...item,
-          addedAt: parseStoredDate(item.addedAt),
-          updatedAt: parseStoredDate(item.updatedAt),
-          harvestDate: item.harvestDate ? parseStoredDate(item.harvestDate) : undefined,
-          expiryDate: item.expiryDate ? parseStoredDate(item.expiryDate) : undefined,
-          priceHistory: (item.priceHistory || []).map((ph: any) => ({
-            date: parseStoredDate(ph.date),
-            price: ph.price
-          })),
-        }));
-        console.log('✅ Loaded', items.length, 'cart items');
-      }
-
-      if (savedLiked) {
-        const parsedLiked = JSON.parse(savedLiked);
-        likedItems = (parsedLiked || []).map((item: any) => ({
-          ...item,
-          likedAt: parseStoredDate(item.likedAt),
-        }));
-        console.log('✅ Loaded', likedItems.length, 'liked items');
-      }
-
-      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-      setCartState({
-        items,
-        likedItems,
-        totalItems,
-        totalPrice,
-        isLoading: false,
-        lastUpdated: new Date(),
-        sessionId,
-        cartVersion: 1,
-        shippingCost: 0,
-        taxAmount: 0,
-        discounts: [],
-      });
-
-      isInitialized.current = true;
-      console.log('✅ Cart initialization complete');
-    } catch (error) {
-      console.error('❌ Error loading cart from localStorage:', error);
-      setCartState(prev => ({
-        ...prev,
-        isLoading: false,
-        sessionId: getSessionId(),
-      }));
-      isInitialized.current = true;
-    }
-  }, [getSessionId]);
-
-  // Save cart to localStorage whenever it changes (with debouncing)
-  useEffect(() => {
-    if (!isInitialized.current || cartState.isLoading || typeof window === 'undefined') {
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      try {
-        const cartData = {
-          items: cartState.items,
-          totalItems: cartState.totalItems,
-          totalPrice: cartState.totalPrice,
-          lastUpdated: cartState.lastUpdated,
-          sessionId: cartState.sessionId,
-          cartVersion: cartState.cartVersion,
-          shippingCost: cartState.shippingCost,
-          taxAmount: cartState.taxAmount,
-          discounts: cartState.discounts,
-        };
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartData));
-        console.log('💾 Cart saved to localStorage:', cartState.items.length, 'items');
-      } catch (error) {
-        console.error('❌ Error saving cart to localStorage:', error);
-        // Try to clear and retry if storage is full
-        try {
-          localStorage.removeItem(CART_STORAGE_KEY);
-          const cartData = {
-            items: cartState.items,
-            totalItems: cartState.totalItems,
-            totalPrice: cartState.totalPrice,
-          };
-          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartData));
-        } catch (retryError) {
-          console.error('❌ Failed to save cart after retry:', retryError);
-        }
-      }
-    }, 300); // Debounce by 300ms
-
-    return () => clearTimeout(timeoutId);
-  }, [cartState.items, cartState.totalItems, cartState.totalPrice, cartState.isLoading]);
-
-  // Save liked items to localStorage whenever it changes
-  useEffect(() => {
-    if (!isInitialized.current || cartState.isLoading || typeof window === 'undefined') {
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      try {
-        localStorage.setItem(LIKED_STORAGE_KEY, JSON.stringify(cartState.likedItems));
-        console.log('💾 Liked items saved to localStorage:', cartState.likedItems.length, 'items');
-      } catch (error) {
-        console.error('❌ Error saving liked items to localStorage:', error);
-      }
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [cartState.likedItems, cartState.isLoading]);
-
-  // Add item to cart with enhanced big tech features
-  const addToCart = useCallback((item: Omit<CartItem, 'id' | 'addedAt' | 'updatedAt'>) => {
-    console.log('🛒 Adding to cart:', item.name);
-
-    // Log cart activity
-    const mockUserId = 'user-' + Date.now();
-    const mockUserRole = 'BUYER';
-    const mockUserEmail = 'user@example.com';
-
-    logCartActivity(mockUserId, mockUserRole, mockUserEmail, 'CART_ADD', {
-      productId: item.productId,
-      listingId: item.listingId,
-      sellerId: item.sellerId,
-      sellerType: item.sellerType,
-      productName: item.name,
-      quantity: item.quantity,
-      price: item.price,
-      currency: item.currency,
-      category: item.category,
-      timestamp: new Date().toISOString()
-    });
-
-    setCartState(prev => {
-      const existingItem = prev.items.find(cartItem =>
-        cartItem.productId === item.productId && cartItem.listingId === item.listingId
-      );
-
-      const now = new Date();
-      let updatedItems: CartItem[];
-
-      if (existingItem) {
-        // Update quantity if item already exists
-        const newQuantity = Math.min(
-          existingItem.quantity + item.quantity,
-          item.maxQuantity || 100,
-          item.availableQuantity || 100
-        );
-
-        updatedItems = prev.items.map(cartItem =>
-          cartItem.id === existingItem.id
-            ? {
-              ...cartItem,
-              quantity: newQuantity,
-              updatedAt: now,
-              priceHistory: [
-                ...(cartItem.priceHistory || []),
-                { date: now, price: item.price }
-              ].slice(-5),
-              isAvailable: item.isAvailable !== false,
-            }
-            : cartItem
-        );
-        console.log('✅ Updated existing item, new quantity:', newQuantity);
-      } else {
-        // Add new item to cart
-        const newItem: CartItem = {
-          ...item,
-          id: `cart-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          addedAt: now,
-          updatedAt: now,
-          isAvailable: item.isAvailable !== false,
-          priceHistory: [{ date: now, price: item.price }],
-          maxQuantity: item.maxQuantity || 100,
-          availableQuantity: item.availableQuantity || 100,
-        };
-
-        updatedItems = [...prev.items, newItem];
-        console.log('✅ Added new item to cart');
-      }
-
-      const totalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
-      const baseTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const discountAmount = updatedItems.reduce((sum, item) => {
-        return sum + (item.discountApplied?.amount || 0);
-      }, 0);
-      const totalPrice = baseTotal - discountAmount;
-
-      console.log('📊 Cart totals - Items:', totalItems, 'Price:', totalPrice);
-
-      return {
-        ...prev,
-        items: updatedItems,
-        totalItems,
-        totalPrice,
-        lastUpdated: now,
-        cartVersion: prev.cartVersion + 1,
-        abandonedCartTime: undefined,
-      };
-    });
-  }, []);
-
-  // Remove item from cart
-  const removeFromCart = useCallback((itemId: string) => {
-    console.log('🗑️ Removing from cart:', itemId);
-
-    setCartState(prev => {
-      const removedItem = prev.items.find(item => item.id === itemId);
-
-      if (removedItem) {
-        const mockUserId = 'user-' + Date.now();
-        const mockUserRole = 'BUYER';
-        const mockUserEmail = 'user@example.com';
-
-        logCartActivity(mockUserId, mockUserRole, mockUserEmail, 'CART_REMOVE', {
-          productId: removedItem.productId,
-          listingId: removedItem.listingId,
-          sellerId: removedItem.sellerId,
-          sellerType: removedItem.sellerType,
-          productName: removedItem.name,
-          quantity: removedItem.quantity,
-          price: removedItem.price,
-          currency: removedItem.currency,
-          category: removedItem.category,
-          timestamp: new Date().toISOString()
-        });
-      }
-
-      const updatedItems = prev.items.filter(item => item.id !== itemId);
-      const totalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-      return {
-        ...prev,
-        items: updatedItems,
-        totalItems,
-        totalPrice,
-        lastUpdated: new Date(),
-      };
-    });
-  }, []);
-
-  // Update item quantity
-  const updateQuantity = useCallback((itemId: string, quantity: number) => {
-    console.log('🔢 Updating quantity:', itemId, quantity);
-
-    if (quantity <= 0) {
-      removeFromCart(itemId);
-      return;
-    }
-
-    setCartState(prev => {
-      const updatedItems = prev.items.map(item =>
-        item.id === itemId
-          ? { ...item, quantity, updatedAt: new Date() }
-          : item
-      );
-
-      const totalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
-      const totalPrice = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-      return {
-        ...prev,
-        items: updatedItems,
-        totalItems,
-        totalPrice,
-        lastUpdated: new Date(),
-      };
-    });
-  }, [removeFromCart]);
-
-  // Clear entire cart
+  // -----------------------------
+  // Helper functions
+  // -----------------------------
   const clearCart = useCallback(() => {
     console.log('🧹 Clearing cart');
     setCartState(prev => ({
@@ -403,7 +97,100 @@ export function useCart() {
     }));
   }, []);
 
-  // Toggle like status with enhanced metadata
+  const getContract = useCallback(async () => {
+    if (typeof window === 'undefined') return null;
+    if (!(window as any).ethereum) throw new Error('MetaMask not found');
+
+    const provider = new ethers.BrowserProvider((window as any).ethereum);
+    const signer = await provider.getSigner();
+
+    const contractAddress = process.env.NEXT_PUBLIC_AGRO_CONTRACT_ADDRESS || '';
+    const agroABI = [
+      "function buyproduct(uint256 pid, uint256 amount) public payable",
+      "event productBought(uint256 indexed productId, address buyer, address farmer, uint256 amount, uint256 txid)"
+    ];
+
+    return new Contract(contractAddress, agroABI, signer);
+
+  }, []);
+
+  // -----------------------------
+  // Checkout
+  // -----------------------------
+  const checkoutWithHedera = useCallback(async () => {
+    setCartState(prev => ({ ...prev, isProcessingHedera: true, hederaError: null }));
+
+    try {
+      const contract = await getContract();
+      if (!contract) throw new Error('Contract not initialized');
+
+      const txPromises = cartState.items.map(item =>
+        contract.buyproduct(
+          BigInt(item.productId),
+          BigInt(item.quantity),
+          { value: ethers.parseEther((item.price * item.quantity).toString()) }
+        ).then((tx: any) => tx.wait())
+      );
+
+      const receipts = await Promise.all(txPromises);
+      const txIds = receipts.map((r: any) => r.transactionHash);
+
+      if (txIds.length === cartState.items.length) clearCart();
+
+      setCartState(prev => ({
+        ...prev,
+        isProcessingHedera: false,
+        hederaTxId: txIds[0]
+      }));
+
+      return { success: true, txIds, message: 'Purchase completed successfully!' };
+    } catch (error) {
+      console.error('Hedera Checkout Error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process Hedera payment';
+      setCartState(prev => ({
+        ...prev,
+        isProcessingHedera: false,
+        hederaError: errorMessage
+      }));
+      return { success: false, message: errorMessage };
+    }
+
+  }, [cartState.items, clearCart, getContract]);
+
+  // -----------------------------
+  // The rest of cart actions
+  // -----------------------------
+  const addToCart = useCallback((item: Omit<CartItem, 'id' | 'addedAt' | 'updatedAt'>) => {
+    const now = new Date();
+    setCartState(prev => {
+      const existingItem = prev.items.find(ci => ci.productId === item.productId && ci.listingId === item.listingId);
+      let updatedItems: CartItem[];
+
+      if (existingItem) {
+        const newQuantity = Math.min(existingItem.quantity + item.quantity, item.maxQuantity || 100, item.availableQuantity || 100);
+        updatedItems = prev.items.map(ci => ci.id === existingItem.id ? { ...ci, quantity: newQuantity, updatedAt: now } : ci);
+      } else {
+        const newItem: CartItem = { ...item, id: `cart-${Date.now()}`, addedAt: now, updatedAt: now, priceHistory: [{ date: now, price: item.price }], isAvailable: item.isAvailable ?? true };
+        updatedItems = [...prev.items, newItem];
+      }
+
+      const totalItems = updatedItems.reduce((sum, i) => sum + i.quantity, 0);
+      const totalPrice = updatedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+      return { ...prev, items: updatedItems, totalItems, totalPrice, lastUpdated: now, cartVersion: prev.cartVersion + 1 };
+    });
+
+  }, []);
+
+  const removeFromCart = useCallback((itemId: string) => {
+    setCartState(prev => {
+      const updatedItems = prev.items.filter(item => item.id !== itemId);
+      const totalItems = updatedItems.reduce((sum, i) => sum + i.quantity, 0);
+      const totalPrice = updatedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      return { ...prev, items: updatedItems, totalItems, totalPrice, lastUpdated: new Date() };
+    });
+  }, []);
+
   const toggleLike = useCallback((productId: string, listingId: string, additionalData?: { category?: string; price?: number; sellerType?: string }) => {
     console.log('❤️ Toggling like:', productId);
 
@@ -440,28 +227,21 @@ export function useCart() {
     });
   }, []);
 
-  // Check if item is in cart
+
+  const updateQuantity = useCallback((itemId: string, quantity: number) => {
+    if (quantity <= 0) return removeFromCart(itemId);
+    setCartState(prev => {
+      const updatedItems = prev.items.map(i => i.id === itemId ? { ...i, quantity, updatedAt: new Date() } : i);
+      const totalItems = updatedItems.reduce((sum, i) => sum + i.quantity, 0);
+      const totalPrice = updatedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      return { ...prev, items: updatedItems, totalItems, totalPrice, lastUpdated: new Date() };
+    });
+  }, [removeFromCart]);
   const isInCart = useCallback((productId: string, listingId: string) => {
     return cartState.items.some(item =>
       item.productId === productId && item.listingId === listingId
     );
   }, [cartState.items]);
-
-  // Check if item is liked
-  const isLiked = useCallback((productId: string, listingId: string) => {
-    return cartState.likedItems.some(like =>
-      like.productId === productId && like.listingId === listingId
-    );
-  }, [cartState.likedItems]);
-
-  // Get cart item by product and listing ID
-  const getCartItem = useCallback((productId: string, listingId: string) => {
-    return cartState.items.find(item =>
-      item.productId === productId && item.listingId === listingId
-    );
-  }, [cartState.items]);
-
-  // Big tech cart features
   const getCartRecommendations = useCallback(() => {
     const likedCategories = cartState.likedItems.reduce((acc, item) => {
       if (item.category) {
@@ -491,14 +271,19 @@ export function useCart() {
     return null;
   }, [cartState.items.length, cartState.lastUpdated]);
 
-  const applyDiscount = useCallback((discount: { type: string; amount: number; description: string }) => {
-    console.log('🏷️ Applying discount:', discount.description);
-    setCartState(prev => ({
-      ...prev,
-      discounts: [...(prev.discounts || []), discount],
-      lastUpdated: new Date(),
-    }));
-  }, []);
+  // Check if item is liked
+  const isLiked = useCallback((productId: string, listingId: string) => {
+    return cartState.likedItems.some(like =>
+      like.productId === productId && like.listingId === listingId
+    );
+  }, [cartState.likedItems]);
+
+  // Get cart item by product and listing ID
+  const getCartItem = useCallback((productId: string, listingId: string) => {
+    return cartState.items.find(item =>
+      item.productId === productId && item.listingId === listingId
+    );
+  }, [cartState.items]);
 
   const getCartSummary = useCallback(() => {
     const subtotal = cartState.totalPrice;
@@ -518,8 +303,11 @@ export function useCart() {
     };
   }, [cartState]);
 
+
+  // -----------------------------
+  // Return state and actions
+  // -----------------------------
   return {
-    // State
     items: cartState.items,
     likedItems: cartState.likedItems,
     totalItems: cartState.totalItems,
@@ -529,25 +317,19 @@ export function useCart() {
     sessionId: cartState.sessionId,
     cartVersion: cartState.cartVersion,
 
-    // Actions
+    cartState,
     addToCart,
+    toggleLike,
     removeFromCart,
     updateQuantity,
     clearCart,
-    toggleLike,
-    applyDiscount,
-
-    // Helpers
     isInCart,
-    isLiked,
-    getCartItem,
     getCartRecommendations,
     getAbandonedCartTime,
     getCartSummary,
+    checkoutWithHedera,
+    isLiked,
+    getCartItem,
 
-    // Enhanced state
-    shippingCost: cartState.shippingCost,
-    taxAmount: cartState.taxAmount,
-    discounts: cartState.discounts,
   };
 }

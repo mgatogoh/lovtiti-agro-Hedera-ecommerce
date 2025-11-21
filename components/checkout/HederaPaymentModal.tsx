@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,8 @@ interface CartItem {
     unit: string;
 }
 
+type PaymentMethod = 'HBAR' | 'USDC';
+
 interface HederaPaymentModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -56,6 +58,13 @@ export default function HederaPaymentModal({
     const [isConnecting, setIsConnecting] = useState(false);
     const [transactionId, setTransactionId] = useState('');
     const [farmerWallets, setFarmerWallets] = useState<{ [sellerId: string]: string }>({});
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('HBAR');
+
+    // USDC contract address on Hedera (mainnet)
+    const USDC_CONTRACT = '0x00000000000000000000000000000000002cc371';
+
+    // USDC has 6 decimals
+    const USDC_DECIMALS = 6;
 
     // Fetch farmer wallet addresses
     useEffect(() => {
@@ -163,6 +172,17 @@ export default function HederaPaymentModal({
         }
     };
 
+    // Convert amount based on payment method
+    const convertAmount = (amount: number, method: PaymentMethod): number => {
+        // Convert from cents to the appropriate unit
+        if (method === 'USDC') {
+            // Convert to USDC (6 decimals)
+            return (amount / 100) * Math.pow(10, USDC_DECIMALS - 2);
+        }
+        // For HBAR, keep as is (converted from cents)
+        return amount / 100;
+    };
+
     const processPayment = async () => {
         setStep('processing');
 
@@ -183,6 +203,7 @@ export default function HederaPaymentModal({
                 }
 
                 const sellerTotal = sellerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const amount = convertAmount(sellerTotal, paymentMethod);
 
                 // Create payment transaction
                 const response = await fetch('/api/payments/hedera', {
@@ -193,9 +214,12 @@ export default function HederaPaymentModal({
                     body: JSON.stringify({
                         fromWallet: walletAddress,
                         toWallet: farmerWallet,
-                        amount: sellerTotal / 100, // Convert cents to HBAR
+                        amount,
                         items: sellerItems,
-                        sellerId
+                        sellerId,
+                        tokenId: paymentMethod === 'USDC' ? USDC_CONTRACT : undefined,
+                        tokenDecimals: paymentMethod === 'USDC' ? USDC_DECIMALS : undefined,
+                        paymentMethod
                     }),
                 });
 
@@ -260,7 +284,7 @@ export default function HederaPaymentModal({
                         Hedera Payment
                     </DialogTitle>
                     <DialogDescription>
-                        Pay with HBAR directly to farmers' wallets
+                        Pay with HBAR or USDC directly to farmers' wallets
                     </DialogDescription>
                 </DialogHeader>
 
@@ -276,7 +300,7 @@ export default function HederaPaymentModal({
                                     <div>
                                         <h3 className="text-lg font-semibold">Connect Your Wallet</h3>
                                         <p className="text-sm text-gray-600 mt-1">
-                                            Connect HashPack or MetaMask to pay with HBAR
+                                            Connect your wallet to pay with HBAR or USDC
                                         </p>
                                     </div>
                                     <Button
@@ -332,7 +356,8 @@ export default function HederaPaymentModal({
                                                 <div className="flex justify-between items-center mb-2">
                                                     <span className="text-sm font-medium">Farmer Payment</span>
                                                     <span className="text-sm font-bold text-green-600">
-                                                        ℏ{(data.total / 100).toFixed(2)}
+                                                        {paymentMethod === 'HBAR' ? 'ℏ' : 'USDC '}
+                                                        {(data.total / 100).toFixed(2)}
                                                     </span>
                                                 </div>
                                                 <div className="text-xs text-gray-600">
@@ -352,7 +377,8 @@ export default function HederaPaymentModal({
                                         <div className="flex justify-between items-center">
                                             <span className="text-lg font-semibold">Total Amount</span>
                                             <span className="text-xl font-bold text-green-600">
-                                                ℏ{(totalAmount / 100).toFixed(2)}
+                                                {paymentMethod === 'HBAR' ? 'ℏ' : 'USDC '}
+                                                {(totalAmount / 100).toFixed(2)}
                                             </span>
                                         </div>
                                     </div>
@@ -380,7 +406,7 @@ export default function HederaPaymentModal({
                                     <div>
                                         <h3 className="text-lg font-semibold">Processing Payment</h3>
                                         <p className="text-sm text-gray-600 mt-1">
-                                            Please wait while we process your HBAR payment...
+                                            Please wait while we process your {paymentMethod} payment...
                                         </p>
                                     </div>
                                 </div>
