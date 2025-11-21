@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^5.0.7",
-    "@hashgraph/sdk": "^2.55.0",
+    "@hashgraph/sdk": "^2.77.0",
     "@prisma/client": "^6.18.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.1",
@@ -48,6 +48,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
+    "ethers": "^6.15.0",
     "express": "^4.19.2",
     "ipfs-http-client": "^60.0.1",
     "jose": "^6.1.1",

@@ -25,7 +25,8 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const { user, isSignedIn, signOut } = useAuth();
-  const { totalItems } = useCart();
+  const { cartState } = useCart();
+  const { totalItems } = cartState;
 
   // Get user role directly from JWT user object
   const userRole = user?.role || null;

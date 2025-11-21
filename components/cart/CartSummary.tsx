@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShoppingCart, Trash2, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Trash2, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { CartItem } from '@/hooks/useCart';
+import { useToast } from '@/hooks/use-toast';
 
 interface CartSummaryProps {
   items: CartItem[];
@@ -21,10 +24,39 @@ export default function CartSummary({
   onClearCart,
   isLoading = false
 }: CartSummaryProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isNavigating, setIsNavigating] = useState(false);
+
   const subtotal = totalPrice;
   const deliveryFee = totalPrice > 0 ? 500 : 0; // Fixed delivery fee
   const serviceFee = totalPrice * 0.025; // 2.5% service fee
   const total = subtotal + deliveryFee + serviceFee;
+
+  const handleCheckout = async () => {
+    if (totalItems === 0) {
+      toast({
+        title: 'Your cart is empty',
+        description: 'Please add items to your cart before checking out',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsNavigating(true);
+      router.push('/checkout');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      toast({
+        title: 'Navigation failed',
+        description: 'Could not navigate to checkout. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsNavigating(false);
+    }
+  };
 
   const handleClearCart = () => {
     if (window.confirm('Are you sure you want to clear your cart? This action cannot be undone.')) {
@@ -106,15 +138,23 @@ export default function CartSummary({
         </div>
 
         {/* Checkout Button */}
-        <Link href="/checkout" className="block">
-          <Button
-            className="w-full bg-green-600 hover:bg-green-700"
-            disabled={isLoading}
-          >
-            Proceed to Checkout
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </Link>
+        <Button
+          onClick={handleCheckout}
+          className="w-full bg-green-600 hover:bg-green-700"
+          disabled={isLoading || isNavigating}
+        >
+          {isNavigating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              Proceed to Checkout
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </>
+          )}
+        </Button>
 
         {/* Continue Shopping */}
         <Link href="/listings/browse" className="block">
