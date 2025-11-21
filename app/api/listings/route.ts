@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from '@/lib/prisma';
 import { uploadToIPFS } from "@/utils/pinata"; //Use your Pinata util
-import { auth } from "@clerk/nextjs/server";
+import { getSession, requireAuth } from "@/lib/auth";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -106,8 +106,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await requireAuth();
+    const userId = session.id;
 
     const body = await request.json();
     const {
@@ -138,14 +138,15 @@ export async function POST(request: Request) {
     if (!user)
       return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    const hasValidProfile = user.profiles.some((p: { type: string; }) =>
-      ["FARMER", "AGROEXPERT"].includes(p.type)
-    );
+    const hasValidProfile =
+      user.role === "FARMER" || user.role === "AGROEXPERT";
+
     if (!hasValidProfile) {
       return NextResponse.json(
         { error: "Farmer or Agro Expert profile required." },
         { status: 403 }
       );
+
     }
 
     // ✅ Upload images to Pinata

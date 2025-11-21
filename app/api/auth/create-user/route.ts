@@ -11,6 +11,7 @@ const createUserSchema = z.object({
   role: z.enum(['BUYER', 'FARMER', 'DISTRIBUTOR', 'TRANSPORTER', 'AGROEXPERT', 'ADMIN']).default('BUYER'),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  password:z.string(),
   profileData: z.object({
     fullName: z.string().optional(),
     country: z.string().optional(),
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { userId: providedUserId, email, role, firstName, lastName, profileData } = validationResult.data;
+    const { userId: providedUserId, email, role, firstName, lastName, profileData , password} = validationResult.data;
 
     console.log('🔍 Creating user:', { email, role, firstName, lastName });
 
@@ -65,7 +66,8 @@ export async function POST(req: NextRequest) {
       data: {
         id: userId,
         email,
-        role: role as any
+        role: role as any,
+        password
       }
     });
 

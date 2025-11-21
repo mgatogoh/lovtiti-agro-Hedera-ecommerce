@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { requireAuth } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
-import prisma from '@/lib/prisma';
-// GET /api/listings/[id] - Get a specific listing
+// GET /api/listings/[id]
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -16,7 +16,7 @@ export async function GET(
             id: true,
             email: true,
             profiles: {
-              where: { type: 'FARMER' },
+              where: { type: "FARMER" },
               select: {
                 fullName: true,
                 country: true,
@@ -39,45 +39,42 @@ export async function GET(
     });
 
     if (!listing) {
-      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
     return NextResponse.json(listing);
   } catch (error) {
-    console.error('Error fetching listing:', error);
+    console.error("Error fetching listing:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch listing' },
+      { error: "Failed to fetch listing" },
       { status: 500 }
     );
   }
 }
 
-// PUT /api/listings/[id] - Update a listing
+// PUT /api/listings/[id]
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await auth();
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = await requireAuth();
+    const userId = session.id;
 
     const body = await request.json();
 
-    // Check if listing exists and user owns it
+    // Check if listing exists and belongs to user
     const existingListing = await prisma.listing.findUnique({
       where: { id: params.id },
       select: { sellerId: true },
     });
 
     if (!existingListing) {
-      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
     if (existingListing.sellerId !== userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const updatedListing = await prisma.listing.update({
@@ -95,7 +92,7 @@ export async function PUT(
             id: true,
             email: true,
             profiles: {
-              where: { type: 'FARMER' },
+              where: { type: "FARMER" },
               select: {
                 fullName: true,
                 country: true,
@@ -108,40 +105,36 @@ export async function PUT(
 
     return NextResponse.json(updatedListing);
   } catch (error) {
-    console.error('Error updating listing:', error);
+    console.error("Error updating listing:", error);
     return NextResponse.json(
-      { error: 'Failed to update listing' },
+      { error: "Failed to update listing" },
       { status: 500 }
     );
   }
 }
 
-// PATCH /api/listings/[id] - Update specific fields of a listing
+// PATCH /api/listings/[id]
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await auth();
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const session = await requireAuth();
+    const userId = session.id;
 
     const body = await request.json();
 
-    // Check if listing exists and user owns it
     const existingListing = await prisma.listing.findUnique({
       where: { id: params.id },
       select: { sellerId: true },
     });
 
     if (!existingListing) {
-      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
     if (existingListing.sellerId !== userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const updatedListing = await prisma.listing.update({
@@ -151,50 +144,45 @@ export async function PATCH(
 
     return NextResponse.json(updatedListing);
   } catch (error) {
-    console.error('Error updating listing:', error);
+    console.error("Error updating listing:", error);
     return NextResponse.json(
-      { error: 'Failed to update listing' },
+      { error: "Failed to update listing" },
       { status: 500 }
     );
   }
 }
 
-// DELETE /api/listings/[id] - Delete a listing
+// DELETE /api/listings/[id]
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await auth();
+    const session = await requireAuth();
+    const userId = session.id;
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if listing exists and user owns it
     const existingListing = await prisma.listing.findUnique({
       where: { id: params.id },
       select: { sellerId: true },
     });
 
     if (!existingListing) {
-      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
     if (existingListing.sellerId !== userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Hard delete the listing
     await prisma.listing.delete({
       where: { id: params.id },
     });
 
-    return NextResponse.json({ message: 'Listing deleted successfully' });
+    return NextResponse.json({ message: "Listing deleted successfully" });
   } catch (error) {
-    console.error('Error deleting listing:', error);
+    console.error("Error deleting listing:", error);
     return NextResponse.json(
-      { error: 'Failed to delete listing' },
+      { error: "Failed to delete listing" },
       { status: 500 }
     );
   }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Leaf,
   ShoppingCart,
@@ -24,26 +24,11 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { user } = useUser();
+  const { user, isSignedIn, signOut } = useAuth();
   const { totalItems } = useCart();
 
-  // Get user role from metadata or user object
-  const getUserRole = () => {
-    if (!user) return null;
-
-    // Get role from Clerk metadata
-    const role = user.publicMetadata?.role as string;
-
-    // If no role in metadata, try to get from database via API
-    if (!role || role === 'UserRole') {
-      // Fallback to 'BUYER' for now, but we should fetch from database
-      return 'BUYER';
-    }
-
-    return role;
-  };
-
-  const userRole = getUserRole();
+  // Get user role directly from JWT user object
+  const userRole = user?.role || null;
 
   // Get display name for role
   const getRoleDisplayName = (role: string | null) => {
@@ -171,19 +156,20 @@ export default function Navbar() {
 
           {/* Auth Section */}
           <div className="hidden md:flex items-center space-x-4">
-            <SignedOut>
-              <Link href="/auth/login">
-                <Button variant="outline" className="hover:bg-green-50 hover:border-green-300 transition-all duration-200">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/auth/signup">
-                <Button className="bg-green-600 hover:bg-green-700 transition-all duration-200 shadow-sm">
-                  Get Started
-                </Button>
-              </Link>
-            </SignedOut>
-            <SignedIn>
+            {!isSignedIn ? (
+              <>
+                <Link href="/auth/login">
+                  <Button variant="outline" className="hover:bg-green-50 hover:border-green-300 transition-all duration-200">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button className="bg-green-600 hover:bg-green-700 transition-all duration-200 shadow-sm">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            ) : (
               <div className="flex items-center space-x-3">
                 <Link href="/settings">
                   <Button variant="outline" size="sm" className="hidden lg:flex items-center justify-center w-10 h-10 p-0">
@@ -198,9 +184,16 @@ export default function Navbar() {
                     {getRoleDisplayName(userRole)}
                   </p>
                 </div>
-                <UserButton />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={signOut}
+                  className="hover:bg-red-50 hover:border-red-300"
+                >
+                  Sign Out
+                </Button>
               </div>
-            </SignedIn>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -274,31 +267,40 @@ export default function Navbar() {
 
               {/* Mobile Auth */}
               <div className="mt-4 pt-4 border-t border-green-200 space-y-2">
-                <SignedOut>
-                  <Link href="/auth/login" className="block">
-                    <Button variant="outline" className="w-full hover:bg-green-50 hover:border-green-300 transition-all duration-200">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link href="/auth/signup" className="block">
-                    <Button className="w-full bg-green-600 hover:bg-green-700 transition-all duration-200 shadow-sm">
-                      Get Started
-                    </Button>
-                  </Link>
-                </SignedOut>
-                <SignedIn>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {user?.firstName || 'User'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {getRoleDisplayName(userRole)}
-                      </p>
+                {!isSignedIn ? (
+                  <>
+                    <Link href="/auth/login" className="block">
+                      <Button variant="outline" className="w-full hover:bg-green-50 hover:border-green-300 transition-all duration-200">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link href="/auth/signup" className="block">
+                      <Button className="w-full bg-green-600 hover:bg-green-700 transition-all duration-200 shadow-sm">
+                        Get Started
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {user?.firstName || 'User'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {getRoleDisplayName(userRole)}
+                        </p>
+                      </div>
                     </div>
-                    <UserButton />
+                    <Button
+                      variant="outline"
+                      className="w-full hover:bg-red-50 hover:border-red-300"
+                      onClick={signOut}
+                    >
+                      Sign Out
+                    </Button>
                   </div>
-                </SignedIn>
+                )}
               </div>
             </div>
           </div>

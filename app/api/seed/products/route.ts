@@ -471,19 +471,25 @@ export async function POST(request: Request) {
 
     // Create farmers and their products
     for (const farmerData of farmers) {
-      console.log(`\n👨‍🌾 Creating farmer: ${farmerData.profile.fullName}`);
-
-      // Create or update user
-      const user = await prisma.user.upsert({
+      console.log(`\n👨‍🌾 Processing farmer: ${farmerData.profile.fullName}`);
+    
+      // Check if user exists
+      const existingUser = await prisma.user.findUnique({
         where: { email: farmerData.email },
-        create: {
-          email: farmerData.email,
-          role: farmerData.role,
-        },
-        update: {
-          role: farmerData.role,
-        },
       });
+    
+      let user;
+    
+      if (existingUser) {
+        // Update only
+        user = await prisma.user.update({
+          where: { email: farmerData.email },
+          data: { role: farmerData.role },
+        });
+      } else {
+        console.log(`⚠️ User with email ${farmerData.email} does not exist. Skipping...`);
+        continue; // Prevents trying to create without password
+      }
 
       // Create or update profile
       const profile = await prisma.profile.upsert({

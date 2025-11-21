@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
 import { useCart } from './useCart';
 
 interface CartSyncOptions {
@@ -17,7 +17,7 @@ export function useCartSync(options: CartSyncOptions = {}) {
     syncOnVisibility = true,
   } = options;
 
-  const { user, isSignedIn } = useUser();
+  const { user, isSignedIn } = useAuth();
   const cart = useCart();
   const syncTimeoutRef = useRef<NodeJS.Timeout>();
   const lastSyncRef = useRef<Date>();
@@ -62,7 +62,7 @@ export function useCartSync(options: CartSyncOptions = {}) {
 
     try {
       const response = await fetch('/api/cart/sync');
-      
+
       if (response.ok) {
         const serverCart = await response.json();
         // In a full implementation, you would merge server cart with local cart
@@ -116,7 +116,7 @@ export function useCartSync(options: CartSyncOptions = {}) {
       if (document.visibilityState === 'visible' && isSignedIn) {
         const now = new Date();
         const lastSync = lastSyncRef.current;
-        
+
         // Only sync if it's been more than 5 minutes since last sync
         if (!lastSync || (now.getTime() - lastSync.getTime()) > 5 * 60 * 1000) {
           syncFromServer();

@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
@@ -37,10 +37,11 @@ const syncCartSchema = z.object({
 // GET - Retrieve user's cart from server
 export async function GET() {
   try {
-    const { userId } = auth();
-    if (!userId) {
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = session.id;
 
     // For now, return empty cart since we don't have cart storage in database yet
     // In a full implementation, you would store cart data in the database
@@ -59,18 +60,19 @@ export async function GET() {
 // POST - Sync cart to server
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
-    if (!userId) {
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = session.id;
 
     const body = await req.json();
     const validationResult = syncCartSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json({ 
-        error: "Invalid cart data", 
-        details: validationResult.error.format() 
+      return NextResponse.json({
+        error: "Invalid cart data",
+        details: validationResult.error.format()
       }, { status: 400 });
     }
 
@@ -99,10 +101,11 @@ export async function POST(req: Request) {
 // DELETE - Clear user's cart on server
 export async function DELETE() {
   try {
-    const { userId } = auth();
-    if (!userId) {
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = session.id;
 
     // In a full implementation, you would clear the user's cart from database
     return NextResponse.json({

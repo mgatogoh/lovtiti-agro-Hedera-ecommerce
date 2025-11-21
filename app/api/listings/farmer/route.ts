@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from '@/lib/prisma';
-import { auth } from "@clerk/nextjs/server";
+import { requireAuth } from "@/lib/auth";
 import { Prisma } from '@prisma/client';
 
 
 // GET /api/listings/farmer - Get current farmer's listings
 export async function GET() {
     try {
-        const { userId } = await auth();
+        const session = await requireAuth();
+        const userId = session.id;
 
         if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,10 +23,9 @@ export async function GET() {
         if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
-
-        const hasValidProfile = user.profiles.some((p: { type: string; }) =>
-            ["FARMER", "AGROEXPERT"].includes(p.type)
-        );
+        
+        const hasValidProfile =
+            user.role === "FARMER" || user.role === "AGROEXPERT";
 
         if (!hasValidProfile) {
             return NextResponse.json(
@@ -33,6 +33,7 @@ export async function GET() {
                 { status: 403 }
             );
         }
+
 
         // Get farmer's listings
         const listings = await prisma.listing.findMany({
