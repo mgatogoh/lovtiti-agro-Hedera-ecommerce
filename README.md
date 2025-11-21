@@ -4,7 +4,7 @@
 
 # 🌾 Lovtiti Agro Mart
 
-# Theme 2: DeFi & Tokenization
+# Theme 1: AI & Agents
 
 🔗 **Live Demo**  
 ## 🎥 Demo Video
