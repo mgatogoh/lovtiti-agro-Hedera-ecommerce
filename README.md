@@ -10,7 +10,7 @@
 ## 🎥 Demo Video
 
 Watch our Hedera Africa Hackathon submission:  
-👉 [HEDERA Africa Hackathon Project](https://youtu.be/R4nVVL1qmns?si=LJ84HJsFl9vuuuEy)
+👉 [HEDERA Africa Hackathon Project](https://lovtiti-agro-hedera-ecommerce.vercel.app/)
 
 
 
