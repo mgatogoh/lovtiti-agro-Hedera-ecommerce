@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
       data: {
         id,
         email,
-        role: (role as any) || 'BUYER'
+        role: (role as any) || 'BUYER',
+        password: "password"
       }
     });
 

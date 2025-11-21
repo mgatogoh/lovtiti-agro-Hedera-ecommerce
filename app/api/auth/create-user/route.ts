@@ -3,17 +3,15 @@ import prisma from '@/lib/prisma';
 import { logUserRegistration } from '@/utils/userActivityLogger';
 import { getRoleDisplayName, getRolePermissions, UserRole } from '@/utils/roleManager';
 import { z } from 'zod';
-import { AGRO_CONTRACT_ID, hederaClient } from '@/lib/hederaClient';
-import { ContractExecuteTransaction, ContractFunctionParameters } from '@hashgraph/sdk';
 
-
-// Validation schema for create user request
+// Validation schema for create user reques t
 const createUserSchema = z.object({
   userId: z.string().optional(), // Clerk user ID if provided
   email: z.string().email('Invalid email format'),
   role: z.enum(['BUYER', 'FARMER', 'DISTRIBUTOR', 'TRANSPORTER', 'AGROEXPERT', 'ADMIN']).default('BUYER'),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  password:z.string(),
   profileData: z.object({
     fullName: z.string().optional(),
     country: z.string().optional(),
@@ -42,7 +40,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { userId: providedUserId, email, role, firstName, lastName, profileData } = validationResult.data;
+    const { userId: providedUserId, email, role, firstName, lastName, profileData , password} = validationResult.data;
 
     console.log('🔍 Creating user:', { email, role, firstName, lastName });
 
@@ -68,7 +66,8 @@ export async function POST(req: NextRequest) {
       data: {
         id: userId,
         email,
-        role: role as any
+        role: role as any,
+        password
       }
     });
 
@@ -92,9 +91,12 @@ export async function POST(req: NextRequest) {
     if (role === "FARMER" && profile && profile.hederaWallet) {
       try {
         console.log("🌾 Executing registerFarmer() on Hedera...");
+        const { AGRO_CONTRACT_ID, hederaClient } = await import('@/lib/hederaClient');
+        const { ContractExecuteTransaction, ContractFunctionParameters } = await import('@hashgraph/sdk'); 
         console.log("📜 Contract ID:", AGRO_CONTRACT_ID.toString());
         console.log("👤 Wallet:", profile.hederaWallet);
-    
+        
+
         const tx = await new ContractExecuteTransaction()
           .setContractId(AGRO_CONTRACT_ID)
           .setGas(400_000)
@@ -103,7 +105,7 @@ export async function POST(req: NextRequest) {
             new ContractFunctionParameters().addAddress(profile.hederaWallet)
           )
           .execute(hederaClient); // Automatically signed using your operator key
-    
+
         const receipt = await tx.getReceipt(hederaClient);
         console.log("✅ Hedera transaction status:", receipt.status.toString());
       } catch (hederaError: any) {

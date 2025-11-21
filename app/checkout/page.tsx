@@ -23,7 +23,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/hooks/useWallet';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
 import HederaPaymentModal from '@/components/checkout/HederaPaymentModal';
 
 interface DeliveryInfo {
@@ -49,7 +49,7 @@ interface PaymentMethod {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user } = useAuth();
   const { items, totalItems, totalPrice, clearCart } = useCart();
 
   // Wallet integration
@@ -65,7 +65,7 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>({
     fullName: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : '',
-    email: user?.emailAddresses[0]?.emailAddress || '',
+    email: user?.email || '',
     phone: '',
     address: '',
     city: '',
@@ -142,7 +142,7 @@ export default function CheckoutPage() {
       setDeliveryInfo(prev => ({
         ...prev,
         fullName: `${user.firstName} ${user.lastName}`.trim(),
-        email: user.emailAddresses?.[0]?.emailAddress || prev.email
+        email: user.email || prev.email
       }));
     }
   }, [user]);

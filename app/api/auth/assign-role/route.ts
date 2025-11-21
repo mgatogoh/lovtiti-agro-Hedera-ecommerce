@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { requireAuth } from "@/lib/auth";
 import { UserRole } from "@/utils/roleManager";
 import { PrismaClient } from "@prisma/client";
 
@@ -10,9 +10,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { role, userId: providedUserId } = body;
 
-    // Get userId from auth or use provided userId (for signup flow)
-    const { userId: authUserId } = await auth();
-    const userId = providedUserId || authUserId;
+    // Get userId from JWT session or use provided userId (for signup flow)
+    let userId = providedUserId;
+
+    if (!userId) {
+      const session = await requireAuth();
+      userId = session.id;
+    }
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized - No user ID provided" }, { status: 401 });
@@ -22,25 +26,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
-    // Update the user's role in Clerk metadata
-    await clerkClient.users.updateUserMetadata(userId, {
-      publicMetadata: {
-        role: role
-      }
-    });
-
-    // Update the user's role in your database
-    const updatedUser = await prisma.user.upsert({
+    // Update the user's role in database
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
-      update: { role: role as any },
-      create: {
-        id: userId,
-        email: "", // Will be updated by webhook
-        role: role as any,
-      }
+      data: { role: role as any }
     });
 
-    console.log(`Role ${role} assigned to user ${userId} in both Clerk metadata and database`);
+    console.log(`Role ${role} assigned to user ${userId} in database`);
 
     return NextResponse.json({
       success: true,
@@ -52,5 +44,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Error assigning role:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

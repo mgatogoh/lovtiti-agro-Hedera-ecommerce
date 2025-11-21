@@ -35,7 +35,8 @@ export async function GET() {
       data: {
         id: 'test-user-' + Date.now(),
         email: 'test@example.com',
-        role: 'BUYER'
+        role: 'BUYER',
+        password: "password"
       }
     });
 
@@ -92,7 +93,8 @@ export async function POST(req: NextRequest) {
           data: {
             id: userData.id || 'user-' + Date.now(),
             email: userData.email || 'test@example.com',
-            role: userData.role || 'BUYER'
+            role: userData.role || 'BUYER',
+            password: userData.password || 'password'
           }
         });
 

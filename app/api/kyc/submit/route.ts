@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { requireAuth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { kycSchema } from "@/utils/validators";
@@ -6,77 +6,129 @@ import { kycSchema } from "@/utils/validators";
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
-	try {
-		const { userId } = auth();
-		if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-		const json = await req.json();
-		const parsed = kycSchema.safeParse(json);
-		if (!parsed.success) return NextResponse.json({ error: parsed.error.format() }, { status: 400 });
+    try {
+        // 🔐 Authenticate user via JWT
+        const session = await requireAuth();
+        const userEmail = session.email; // derived from JWT
+        const userIdFromToken = session.id;
 
-		const { fullName, country, address, idNumber, phone, hederaWallet, type } = parsed.data;
+        // Validate input
+        const json = await req.json();
+        const parsed = kycSchema.safeParse(json);
 
-		// Map the type to the correct role enum
-		const roleMapping: Record<string, string> = {
-			"BUYER": "BUYER",
-			"FARMER": "FARMER",
-			"DISTRIBUTOR": "DISTRIBUTOR",
-			"TRANSPORTER": "TRANSPORTER",
-			"AGROEXPERT": "AGROEXPERT"
-		};
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: parsed.error.format() },
+                { status: 400 }
+            );
+        }
 
-		const userRole = roleMapping[type] || "FARMER";
+        const { fullName, country, address, idNumber, phone, hederaWallet, type } = parsed.data;
 
-		// Find or create user by Clerk userId email is not stored here; using userId in profiles
-		// For simplicity, ensure user exists
-		const user = await prisma.user.upsert({
-			where: { email: `${userId}@clerk.local` },
-			create: { email: `${userId}@clerk.local`, role: userRole as any },
-			update: { role: userRole as any },
-		});
+        // Map type to user roles
+        const roleMapping: Record<string, string> = {
+            BUYER: "BUYER",
+            FARMER: "FARMER",
+            DISTRIBUTOR: "DISTRIBUTOR",
+            TRANSPORTER: "TRANSPORTER",
+            AGROEXPERT: "AGROEXPERT"
+        };
 
-		// Create profile with role-specific data
-		const profile = await prisma.profile.upsert({
-			where: { userId_type: { userId: user.id, type: type as any } },
-			create: {
-				userId: user.id,
-				type: type as any,
-				fullName,
-				country,
-				address,
-				idNumber,
-				phone,
-				hederaWallet,
-				kycStatus: "PENDING"
-			},
-			update: {
-				fullName,
-				country,
-				address,
-				idNumber,
-				phone,
-				hederaWallet,
-				kycStatus: "PENDING" // Reset to pending when updating
-			},
-		});
+        const userRole = roleMapping[type] || "FARMER";
 
-		// Log role-specific KYC requirements for verification
-		if (type === "DISTRIBUTOR") {
-			const { businessLicense, warehouseCert, taxId, businessType, storageCapacity } = parsed.data;
-			console.log("Distributor KYC:", { businessLicense, warehouseCert, taxId, businessType, storageCapacity });
-		} else if (type === "TRANSPORTER") {
-			const { vehicleRegistrations, insurancePolicy, drivingLicense, fleetSize, vehicleTypes } = parsed.data;
-			console.log("Transporter KYC:", { vehicleRegistrations, insurancePolicy, drivingLicense, fleetSize, vehicleTypes });
-		} else if (type === "AGROEXPERT") {
-			const { professionalLicense, productSupplierPermits, agriculturalExpertiseCert, specialization, yearsOfExperience } = parsed.data;
-			console.log("AgroExpert KYC:", { professionalLicense, productSupplierPermits, agriculturalExpertiseCert, specialization, yearsOfExperience });
-		} else if (type === "FARMER") {
-			const { landOwnership, certifications, farmSize, cropTypes } = parsed.data;
-			console.log("Farmer KYC:", { landOwnership, certifications, farmSize, cropTypes });
-		}
+        // Ensure the authenticated user exists in DB
+		const user = await prisma.user.findUnique({
+			where: { email: userEmail }
+		  });
+		  
+		  if (!user) {
+			return NextResponse.json(
+			  { error: "User account not found. Please log in again." },
+			  { status: 404 }
+			);
+		  }
+		  
+		  // Continue with KYC logic...
+		  
 
-		return NextResponse.json({ ok: true, profile });
-	} catch (err) {
-		console.error("KYC submit error", err);
-		return NextResponse.json({ error: "Server error" }, { status: 500 });
-	}
+        // Upsert KYC profile
+        const profile = await prisma.profile.upsert({
+            where: { 
+                userId_type: { 
+                    userId: user.id, 
+                    type: type as any 
+                } 
+            },
+            create: {
+                userId: user.id,
+                type: type as any,
+                fullName,
+                country,
+                address,
+                idNumber,
+                phone,
+                hederaWallet,
+                kycStatus: "PENDING"
+            },
+            update: {
+                fullName,
+                country,
+                address,
+                idNumber,
+                phone,
+                hederaWallet,
+                kycStatus: "PENDING" // Reset on update
+            },
+        });
+
+        // Optional: debug logs for role-specific KYC data
+        switch (type) {
+            case "DISTRIBUTOR":
+                console.log("Distributor KYC:", {
+                    businessLicense: parsed.data.businessLicense,
+                    warehouseCert: parsed.data.warehouseCert,
+                    taxId: parsed.data.taxId,
+                    businessType: parsed.data.businessType,
+                    storageCapacity: parsed.data.storageCapacity
+                });
+                break;
+
+            case "TRANSPORTER":
+                console.log("Transporter KYC:", {
+                    vehicleRegistrations: parsed.data.vehicleRegistrations,
+                    insurancePolicy: parsed.data.insurancePolicy,
+                    drivingLicense: parsed.data.drivingLicense,
+                    fleetSize: parsed.data.fleetSize,
+                    vehicleTypes: parsed.data.vehicleTypes
+                });
+                break;
+
+            case "AGROEXPERT":
+                console.log("AgroExpert KYC:", {
+                    professionalLicense: parsed.data.professionalLicense,
+                    productSupplierPermits: parsed.data.productSupplierPermits,
+                    agriculturalExpertiseCert: parsed.data.agriculturalExpertiseCert,
+                    specialization: parsed.data.specialization,
+                    yearsOfExperience: parsed.data.yearsOfExperience
+                });
+                break;
+
+            case "FARMER":
+                console.log("Farmer KYC:", {
+                    landOwnership: parsed.data.landOwnership,
+                    certifications: parsed.data.certifications,
+                    farmSize: parsed.data.farmSize,
+                    cropTypes: parsed.data.cropTypes
+                });
+                break;
+        }
+
+        return NextResponse.json({ ok: true, profile });
+    } catch (err) {
+        console.error("KYC submit error", err);
+        return NextResponse.json(
+            { error: "Server error" },
+            { status: 500 }
+        );
+    }
 }

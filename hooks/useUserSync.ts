@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
 
 export function useUserSync() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useAuth();
   const [isSynced, setIsSynced] = useState(false);
 
   useEffect(() => {
