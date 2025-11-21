@@ -48,6 +48,7 @@ export default function LoginPage() {
 
         try {
             const result = await signIn(formData.email, formData.password);
+            const userRole = (result.user?.role || 'buyer').toLowerCase();
 
             if (result.success) {
                 toast({
@@ -56,7 +57,7 @@ export default function LoginPage() {
                 });
 
                 // Redirect to intended page or dashboard
-                const redirect = searchParams.get('redirect') || '/dashboard';
+                const redirect = searchParams.get('redirect') || `/dashboard/${userRole}`;
                 router.push(redirect);
             } else {
                 setError(result.error || 'Login failed');
