@@ -4,13 +4,13 @@
 
 # 🌾 Lovtiti Agro Mart
 
-# Track : Onchain Finance And Real-World Assets (RWA)
+# Theme 2: DeFi & Tokenization
 
 🔗 **Live Demo**  
 ## 🎥 Demo Video
 
-Watch our Hedera Africa Hackathon submission:  
-👉 [HEDERA Africa Hackathon Project](https://lovtiti-agro-hedera-ecommerce.vercel.app/)
+Watch our Hedera Hello Future Ascension Hackathon submission:  
+👉 [HEDERA Hello Future Ascension Hackathon Project](https://lovtiti-agro-hedera-ecommerce.vercel.app/)
 
 
 
@@ -66,9 +66,6 @@ Lovtiti Agro Mart is built by a passionate, cross-functional team committed to t
 
 - **Carita** — *Backend Developer*  
   Engineered the server-side logic and database architecture for secure, scalable performance.
-
-- **Captain AI** — *Backend Developer*  
-  Structured routes, authentication, and system stability to support seamless operations.
 
 - **Gurpratap** — *Smart Contract Developer*  
   Developed Hedera-powered smart contracts for secure, traceable, and trust-based transactions.
